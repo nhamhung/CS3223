@@ -9,26 +9,14 @@ import java.io.Serializable;
 
 public class Block implements Serializable {
 
-    int totalCapacity;          // Max capacity of the block
+    int totalCapacity;          // Total number of tuples that can fit in the block
     int numBuffers;             // Number of buffers per block
-    static int BlockSize;       // The literal size of each block
     ArrayList<Tuple> tuples;    // The tuples in the page
 
-    /** Set number of bytes per page **/
-    // TODO: Set block size if needed
-    public static void setBlockSize(int size) {
-        BlockSize = size;
-    }
-
-    /** Get number of bytes per page **/
-    public static int getBlockSize() {
-        return BlockSize;
-    }
-
     /** Number of tuples per page **/
-    public Block(int numPages, int tuplesPerPage) {
-        numBuffers = numPages;
-        totalCapacity = numPages * tuplesPerPage;
+    public Block(int numBuffers, int tuplesPerPage) {
+        this.numBuffers = numBuffers;
+        totalCapacity = numBuffers * tuplesPerPage;
         tuples = new ArrayList<>(totalCapacity);
     }
 
@@ -37,6 +25,7 @@ public class Block implements Serializable {
         tuples.add(t);
     }
 
+    /** @return number of tuples that the block can hold **/
     public int capacity() {
         return totalCapacity;
     }
@@ -73,14 +62,13 @@ public class Block implements Serializable {
         tuples.set(i, t);
     }
 
+    /** Returns the number of tuples in the block **/
     public int size() {
         return tuples.size();
     }
 
+    /** Returns true if number of typles in block **/
     public boolean isFull() {
-        if (size() == capacity())
-            return true;
-        else
-            return false;
+        return size() == capacity();
     }
 }
