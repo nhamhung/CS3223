@@ -9,12 +9,12 @@ public class BlockNestedJoin extends Join {
 
     static int filenum = 0;         // To get unique filenum for this operation
     int batchSize;                  // Number of tuples per out batch
-    ArrayList<Integer> leftindex;   // Indices of the join attributes in left table
-    ArrayList<Integer> rightindex;  // Indices of the join attributes in right table
+    ArrayList<Integer> leftIndex;   // Indices of the join attributes in left table
+    ArrayList<Integer> rightIndex;  // Indices of the join attributes in right table
     String rfname;                  // The file name where the right table is materialized
     Batch outputPage;                 // Buffer page for output
     Block leftBlock;                // Buffer block for left input stream
-    Batch rightBatch;               // Buffer page for right input stream
+    Batch rightPage;               // Buffer page for right input stream
     ObjectInputStream in;           // File pointer to the right hand materialized file
 
     int leftCursor;                       // Cursor for left side buffer
@@ -37,19 +37,19 @@ public class BlockNestedJoin extends Join {
      **/
     public boolean open() {
         /** select number of tuples per batch **/
-        int tuplesize = schema.getTupleSize();
-        batchSize = Batch.getPageSize() / tuplesize;
+        int tupleSize = schema.getTupleSize();
+        batchSize = Batch.getPageSize() / tupleSize;
 
         /** find indices attributes of join conditions **/
-        leftindex = new ArrayList<>();
-        rightindex = new ArrayList<>();
+        leftIndex = new ArrayList<>();
+        rightIndex = new ArrayList<>();
         for (Condition con : conditionList) {
-            Attribute leftattr = con.getLhs();
-            Attribute rightattr = (Attribute) con.getRhs();
-            leftindex.add(left.getSchema().indexOf(leftattr));
-            rightindex.add(right.getSchema().indexOf(rightattr));
+            Attribute leftAttr = con.getLhs();
+            Attribute rightAttr = (Attribute) con.getRhs();
+            leftIndex.add(left.getSchema().indexOf(leftAttr));
+            rightIndex.add(right.getSchema().indexOf(rightAttr));
         }
-        Batch rightpage;
+        Batch rightPage;
 
         /** initialize the cursors of input buffers **/
         leftCursor = 0;
@@ -74,8 +74,8 @@ public class BlockNestedJoin extends Join {
             rfname = "NJtemp-" + String.valueOf(filenum);
             try {
                 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
-                while ((rightpage = right.next()) != null) {
-                    out.writeObject(rightpage);
+                while ((rightPage = right.next()) != null) {
+                    out.writeObject(rightPage);
                 }
                 out.close();
             } catch (IOException io) {
@@ -117,10 +117,10 @@ public class BlockNestedJoin extends Join {
                     readRightPage();
                 }
                 while (leftCursor < leftBlock.size()) {
-                    while (rightCursor < rightBatch.size()) {
+                    while (rightCursor < rightPage.size()) {
                         Tuple leftTuple = leftBlock.get(leftCursor);
-                        Tuple rightTuple = rightBatch.get(rightCursor);
-                        if (leftTuple.checkJoin(rightTuple, leftindex, rightindex)) {
+                        Tuple rightTuple = rightPage.get(rightCursor);
+                        if (leftTuple.checkJoin(rightTuple, leftIndex, rightIndex)) {
                             Tuple outTuple = leftTuple.joinWith(rightTuple);
                             outputPage.add(outTuple);
                             if (outputPage.isFull()) {
@@ -151,7 +151,7 @@ public class BlockNestedJoin extends Join {
 
     private void readRightPage() {
         try {
-            rightBatch = (Batch) in.readObject();
+            rightPage = (Batch) in.readObject();
         } catch (EOFException e) {
             try {
                 in.close();

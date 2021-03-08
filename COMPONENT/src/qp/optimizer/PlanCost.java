@@ -144,7 +144,7 @@ public class PlanCost {
                 joincost = leftpages * rightpages;
                 break;
             case JoinType.BLOCKNESTED:
-                joincost = leftpages / numbuff * rightpages;
+                joincost = leftpages / (numbuff - 2) * rightpages;
                 break;
             default:
                 System.out.println("join type is not supported");
