@@ -182,10 +182,8 @@ public class BlockNestedJoin extends Join {
             }
         }
         this.leftBlock = leftBlock;
-        System.out.println("read left block");
         if (leftBlock.isEmpty()) {
             endOfLeftTable = true;
-            System.out.println("leftblock is empty");
         }
     }
 
