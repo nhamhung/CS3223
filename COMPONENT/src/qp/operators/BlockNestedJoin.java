@@ -158,6 +158,7 @@ public class BlockNestedJoin extends Join {
             } catch (IOException io) {
                 System.out.println("BlockNestedJoin: Error in reading temporary file");
             }
+            rightPage = new Batch(0);
             endOfRightTable = true;
         } catch (ClassNotFoundException c) {
             System.out.println("BlockNestedJoin: Error in deserialising temporary file ");
@@ -181,7 +182,11 @@ public class BlockNestedJoin extends Join {
             }
         }
         this.leftBlock = leftBlock;
-        if (leftBlock.isEmpty()) endOfLeftTable = true;
+        System.out.println("read left block");
+        if (leftBlock.isEmpty()) {
+            endOfLeftTable = true;
+            System.out.println("leftblock is empty");
+        }
     }
 
     /**
