@@ -5,11 +5,12 @@ import qp.utils.Batch;
 import qp.utils.Schema;
 import qp.utils.Tuple;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Sort extends Operator {
-    Operator base;                 // Base table to project
-    ArrayList<Attribute> attrset;  // Set of attributes to project
+    Operator base;                 // Base table to sort
+    ArrayList<Attribute> attrset;  // Set of attributes to compare
     int batchsize;                 // Number of tuples per outbatch
 
     /**
@@ -23,7 +24,7 @@ public class Sort extends Operator {
      * index of the attributes in the base operator
      * * that are to be projected
      **/
-    int[] attrIndex;
+    ArrayList<Integer> attrIndex;
 
     public Sort(Operator base, ArrayList<Attribute> as, int type) {
         super(type);
@@ -55,17 +56,17 @@ public class Sort extends Operator {
          ** are required from the base operator
          **/
         Schema baseSchema = base.getSchema();
-        attrIndex = new int[attrset.size()];
+        attrIndex = new ArrayList<>();
         for (int i = 0; i < attrset.size(); ++i) {
             Attribute attr = attrset.get(i);
 
             if (attr.getAggType() != Attribute.NONE) {
-                System.err.println("Aggragation is not implemented.");
+                System.err.println("Aggregation is not implemented.");
                 System.exit(1);
             }
 
             int index = baseSchema.indexOf(attr.getBaseAttribute());
-            attrIndex[i] = index;
+            attrIndex.add(index);
         }
         return true;
     }
@@ -77,7 +78,6 @@ public class Sort extends Operator {
         outbatch = new Batch(batchsize);
         /** all the tuples in the inbuffer goes to the output buffer **/
         inbatch = base.next();
-
         if (inbatch == null) {
             return null;
         }
@@ -85,6 +85,7 @@ public class Sort extends Operator {
             Tuple basetuple = inbatch.get(i);
             outbatch.add(basetuple);
         }
+        outbatch.sortBy(attrIndex);
         return outbatch;
     }
 
