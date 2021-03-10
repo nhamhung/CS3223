@@ -59,6 +59,7 @@ public class RandomInitialPlan {
         }
 
         if (sqlquery.getOrderByList().size() > 0) {
+            sqlquery.getOrderByList().forEach(x -> Debug.PPrint(x));
             System.err.println("Orderby is not implemented.");
             System.exit(1);
         }
