@@ -10,6 +10,7 @@ import qp.utils.*;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 
@@ -22,6 +23,7 @@ public class RandomInitialPlan {
     ArrayList<Condition> selectionlist;   // List of select conditons
     ArrayList<Condition> joinlist;        // List of join conditions
     ArrayList<Attribute> groupbylist;
+    ArrayList<Attribute> orderByList;
     int numJoin;            // Number of joins in this query
     HashMap<String, Operator> tab_op_hash;  // Table name to the Operator
     Operator root;          // Root of the query plan tree
@@ -33,6 +35,7 @@ public class RandomInitialPlan {
         selectionlist = sqlquery.getSelectionList();
         joinlist = sqlquery.getJoinList();
         groupbylist = sqlquery.getGroupByList();
+        orderByList = sqlquery.getOrderByList();
         numJoin = joinlist.size();
     }
 
@@ -186,6 +189,11 @@ public class RandomInitialPlan {
 
     public void createProjectOp() {
         Operator base = root;
+
+        System.out.println("Artribute to project by: ");
+        projectlist.forEach(x -> Debug.PPrint(x));
+        System.out.println();
+
         if (projectlist == null)
             projectlist = new ArrayList<Attribute>();
         if (!projectlist.isEmpty()) {
@@ -196,7 +204,16 @@ public class RandomInitialPlan {
     }
 
     public void createOrderbyOp() {
-
+        Operator base = root;
+        if (orderByList == null)
+            orderByList = new ArrayList<Attribute>();
+        System.out.println("Artribute to sort by: ");
+        orderByList.forEach(x -> Debug.PPrint(x));
+        System.out.println();
+        if (!orderByList.isEmpty()) {
+            root = new Sort(base, orderByList, OpType.SORT);
+            root.setSchema(base.getSchema());
+        }
     }
 
     private void modifyHashtable(Operator old, Operator newop) {
