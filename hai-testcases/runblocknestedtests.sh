@@ -3,9 +3,9 @@ then
     mkdir testoutput
 fi
 echo "10000\n5\n1\n"| java QueryMain queries/bnlquery.sql testoutput/bnlquery.out # generic 115 values
-#echo "200\n3\n1\n"| java QueryMain queries/query3.sql testoutput/out3_3buffer.out # expect this to take a long time
+echo "200\n3\n1\n"| java QueryMain queries/query3.sql testoutput/out3_3buffer.out # expect this to take a long time
 echo "2000000\n3\n1\n"| java QueryMain queries/query3.sql testoutput/out3_bigbuffer.out # big batch, few buffers
-#echo "200\n50\n1\n"| java QueryMain queries/query3.sql testoutput/out3_500buffer.out # expect this to have 500 values
-#echo "200\n50\n1\n"| java QueryMain queries/query31.sql testoutput/out31.out # expect this to be empty
-#echo "200\n50\n1\n"| java QueryMain queries/query32.sql testoutput/out32.out # expect this to be empty
-#echo "200\n50\n1\n"| java QueryMain queries/query33.sql testoutput/out33.out # expect this to be empty
+echo "200\n50\n1\n"| java QueryMain queries/query3.sql testoutput/out3_500buffer.out # expect this to have 500 values
+echo "200\n50\n1\n"| java QueryMain queries/query31.sql testoutput/out31.out # expect this to be empty
+echo "200\n50\n1\n"| java QueryMain queries/query32.sql testoutput/out32.out # expect this to be empty
+echo "200\n50\n1\n"| java QueryMain queries/query33.sql testoutput/out33.out # expect this to be empty
