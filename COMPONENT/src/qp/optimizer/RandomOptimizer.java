@@ -75,6 +75,7 @@ public class RandomOptimizer {
         } else if (node.getOpType() == OpType.SORT) {
             Operator base = makeExecPlan(((Sort) node).getBase());
             ((Sort) node).setBase(base);
+            ((Sort) node).setNumBuff(BufferManager.numBuffer);
             return node;
         } else {
             return node;

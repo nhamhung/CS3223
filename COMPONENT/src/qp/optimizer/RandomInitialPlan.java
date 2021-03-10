@@ -190,10 +190,6 @@ public class RandomInitialPlan {
     public void createProjectOp() {
         Operator base = root;
 
-        System.out.println("Artribute to project by: ");
-        projectlist.forEach(x -> Debug.PPrint(x));
-        System.out.println();
-
         if (projectlist == null)
             projectlist = new ArrayList<Attribute>();
         if (!projectlist.isEmpty()) {
@@ -207,9 +203,6 @@ public class RandomInitialPlan {
         Operator base = root;
         if (orderByList == null)
             orderByList = new ArrayList<Attribute>();
-        System.out.println("Artribute to sort by: ");
-        orderByList.forEach(x -> Debug.PPrint(x));
-        System.out.println();
         if (!orderByList.isEmpty()) {
             root = new Sort(base, orderByList, OpType.SORT);
             root.setSchema(base.getSchema());

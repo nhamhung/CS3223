@@ -29,7 +29,7 @@ public class Batch implements Serializable {
         tuples = new ArrayList<>(MAX_SIZE);
     }
 
-    public void sortBy(ArrayList<Integer> attrs) {
+    public void orderBy(ArrayList<Integer> attrs) {
         tuples.sort((t1, t2) -> {
             for (int i: attrs) {
                 if (t1.dataAt(i).equals(t2.dataAt(i))) continue;
@@ -38,7 +38,6 @@ public class Batch implements Serializable {
             return 0;
         });
     }
-
 
     /** Insert the record in page at next free location **/
     public void add(Tuple t) {
