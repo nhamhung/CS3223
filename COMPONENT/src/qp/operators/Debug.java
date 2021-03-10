@@ -123,7 +123,6 @@ public class Debug {
             PPrint(((Sort) node).getBase());
             System.out.print(")");
         }
-
     }
 
 

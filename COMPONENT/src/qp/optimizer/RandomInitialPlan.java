@@ -61,12 +61,6 @@ public class RandomInitialPlan {
             System.exit(1);
         }
 
-//        if (sqlquery.getOrderByList().size() > 0) {
-//            sqlquery.getOrderByList().forEach(x -> Debug.PPrint(x));
-//            System.err.println("Orderby is not implemented.");
-//            System.exit(1);
-//        }
-
         tab_op_hash = new HashMap<>();
         createScanOp();
         createSelectOp();
@@ -189,7 +183,6 @@ public class RandomInitialPlan {
 
     public void createProjectOp() {
         Operator base = root;
-
         if (projectlist == null)
             projectlist = new ArrayList<Attribute>();
         if (!projectlist.isEmpty()) {
