@@ -4,6 +4,7 @@ import qp.utils.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class Sort extends Operator {
     Operator base;                 // Base table to sort
@@ -15,6 +16,7 @@ public class Sort extends Operator {
     int numRounds;              // Number of merge rounds
     boolean isDesc;             // Whether the sort is descending
     int isDescFactor;           // Hacky way to reverse ordering
+    String randomString;        // UUID string to support writing to files (avoiding collisions)
     boolean endOfBase = false;      // Whether we've reached the end of the base operator
     boolean endOfSortedFile = false;     // Whether we've reached the end of the sorted file
     boolean sorted = false;         // Whether sorting have taken place, we only sort once
@@ -39,6 +41,12 @@ public class Sort extends Operator {
         this.numSubFiles = 0;
         this.isDesc = isDesc;
         isDescFactor = isDesc ? -1 : 1;
+        this.randomString = generateRandomString();
+    }
+
+    public static String generateRandomString() {
+        String uuid = UUID.randomUUID().toString();
+        return uuid;
     }
 
     public Operator getBase() {
@@ -94,7 +102,7 @@ public class Sort extends Operator {
             sorted = true;
         }
         if (currentReader == null) {
-            currentReader = new TupleReader(String.format("tmp-%d-1", numRounds), batchSize);
+            currentReader = new TupleReader(String.format("tmp%s-%d-1", randomString, numRounds), batchSize);
             currentReader.open();
         }
 
@@ -124,7 +132,7 @@ public class Sort extends Operator {
             newBlock.orderBy(attrIndex, isDesc);
 
             // Write the sub file
-            TupleWriter writer = new TupleWriter(String.format("tmp-0-%d", numSubFiles + 1), batchSize);
+            TupleWriter writer = new TupleWriter(String.format("tmp%s-0-%d", randomString, numSubFiles + 1), batchSize);
             writer.open();
             for (int i = 0; i < newBlock.size(); i++) {
                 writer.next(newBlock.get(i));
@@ -151,11 +159,11 @@ public class Sort extends Operator {
                  i < numFilesBeingRead;
                  i++) {
                 int fileNum = count * numSortPage + i + 1;
-                readers[i] = new TupleReader(String.format("tmp-%d-%d", numRounds, fileNum), batchSize);
+                readers[i] = new TupleReader(String.format("tmp%s-%d-%d", randomString, numRounds, fileNum), batchSize);
                 readers[i].open();
             }
             // Create sorted file
-            TupleWriter writer = new TupleWriter(String.format("tmp-%d-%d", numRounds + 1, count + 1), batchSize);
+            TupleWriter writer = new TupleWriter(String.format("tmp%s-%d-%d", randomString, numRounds + 1, count + 1), batchSize);
             writer.open();
             while (true) {
                 Tuple newTuple = getNextTuple(readers);
@@ -219,7 +227,7 @@ public class Sort extends Operator {
         for (int i = 0; i <= numRounds; i += 1) {
             int j = 1;
             while (true) {
-                File f = new File(String.format("tmp-%d-%d", i, j));
+                File f = new File(String.format("tmp%s-%d-%d", randomString, i, j));
                 if (!f.delete()) break;
                 j += 1;
             }
