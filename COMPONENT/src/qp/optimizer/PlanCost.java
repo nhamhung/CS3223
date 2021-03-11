@@ -259,6 +259,11 @@ public class PlanCost {
         long pagesize = Math.max(Batch.getPageSize() / tuplesize, 1);
         long numpages = (long) Math.ceil((double) numtuples / (double) pagesize);
 
+        if (tuplesize > Batch.getPageSize()) {
+            System.out.println("Page is too small to read tuples from " + tablename);
+            System.exit(1);
+        }
+
         cost = cost + numpages;
 
         try {
