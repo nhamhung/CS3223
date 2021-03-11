@@ -6,6 +6,7 @@ package qp.utils;
 
 import java.util.ArrayList;
 import java.io.Serializable;
+import java.util.Collections;
 
 public class Block implements Serializable {
 
@@ -20,14 +21,9 @@ public class Block implements Serializable {
         tuples = new ArrayList<>(totalCapacity);
     }
 
-    public void orderBy(ArrayList<Integer> attrs) {
-        tuples.sort((t1, t2) -> {
-            for (int i: attrs) {
-                if (t1.dataAt(i).equals(t2.dataAt(i))) continue;
-                return Tuple.compareTuples(t1, t2, attrs, attrs);
-            }
-            return 0;
-        });
+    public void orderBy(ArrayList<Integer> attrs, Boolean isDesc) {
+        int isDescFactor = isDesc ? -1 : 1;
+        tuples.sort((t1, t2) -> isDescFactor * Tuple.compareTuples(t1, t2, attrs, attrs));
     }
 
     /** Insert the record in page at next free location **/

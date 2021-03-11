@@ -1,3 +1,3 @@
 SELECT *
 FROM Customer
-ORDERBY Customer.gender,Customer.cid
+ORDERBY Customer.gender,Customer.cid DESC

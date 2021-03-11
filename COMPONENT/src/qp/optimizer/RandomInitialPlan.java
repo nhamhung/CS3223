@@ -197,7 +197,7 @@ public class RandomInitialPlan {
         if (orderByList == null)
             orderByList = new ArrayList<Attribute>();
         if (!orderByList.isEmpty()) {
-            root = new Sort(base, orderByList, OpType.SORT);
+            root = new Sort(base, orderByList, OpType.SORT, sqlquery.isDesc());
             root.setSchema(base.getSchema());
         }
     }
