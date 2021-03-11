@@ -13,6 +13,8 @@ public class Sort extends Operator {
     int numSubFiles;                // Number of sub files
     int numBuffers;                 // Number of buffers
     int numRounds;              // Number of merge rounds
+    boolean isDesc;             // Whether the sort is descending
+    int isDescFactor;           // Hacky way to reverse ordering
     boolean endOfBase = false;      // Whether we've reached the end of the base operator
     boolean endOfSortedFile = false;     // Whether we've reached the end of the sorted file
     boolean sorted = false;         // Whether sorting have taken place, we only sort once
@@ -30,11 +32,13 @@ public class Sort extends Operator {
      **/
     ArrayList<Integer> attrIndex;
 
-    public Sort(Operator base, ArrayList<Attribute> as, int type) {
+    public Sort(Operator base, ArrayList<Attribute> as, int type, boolean isDesc) {
         super(type);
         this.base = base;
         this.attrset = as;
         this.numSubFiles = 0;
+        this.isDesc = isDesc;
+        isDescFactor = isDesc ? -1 : 1;
     }
 
     public Operator getBase() {
@@ -117,7 +121,7 @@ public class Sort extends Operator {
             }
 
             // Sort the sub file
-            newBlock.orderBy(attrIndex);
+            newBlock.orderBy(attrIndex, isDesc);
 
             // Write the sub file
             TupleWriter writer = new TupleWriter(String.format("tmp-0-%d", numSubFiles + 1), batchSize);
@@ -176,7 +180,7 @@ public class Sort extends Operator {
             Tuple curTuple = readers[i].peek();
             if (curTuple == null) continue;
             if (nextTuple == null
-                || Tuple.compareTuples(curTuple, nextTuple, attrIndex, attrIndex) < 0) {
+                || isDescFactor * Tuple.compareTuples(curTuple, nextTuple, attrIndex, attrIndex) < 0) {
                 nextTuple = curTuple;
                 fileIndex = i;
             }
@@ -229,7 +233,7 @@ public class Sort extends Operator {
         ArrayList<Attribute> newattr = new ArrayList<>();
         for (int i = 0; i < attrset.size(); ++i)
             newattr.add((Attribute) attrset.get(i).clone());
-        Sort newSort = new Sort(newbase, newattr, optype);
+        Sort newSort = new Sort(newbase, newattr, optype, isDesc);
         newSort.setNumBuff(numBuffers);
         newSort.setSchema(newbase.getSchema());
         return newSort;
