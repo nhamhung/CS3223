@@ -100,8 +100,7 @@ public class Sort extends Operator {
 
     private void createSubFiles() {
         while (!endOfBase) {
-            Block newBlock = new Block(numBuffers - 1, batchSize);
-
+            Block newBlock = new Block(numBuffers, batchSize);
             // Create new sub file represented by block
             while (!newBlock.isFull()) {
                 Batch nextPage = base.next();
