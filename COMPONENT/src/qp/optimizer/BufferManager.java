@@ -6,7 +6,9 @@ package qp.optimizer;
 
 public class BufferManager {
 
-    static int numBuffer;
+    // Set initial numBuffer = 10, minimum would be 3
+    // This is to support sort if there are no joins
+    static int numBuffer = 10;
     static int numJoin;
 
     static int buffPerJoin;
