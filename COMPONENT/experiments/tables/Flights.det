@@ -1,0 +1,8 @@
+6
+32
+flno INTEGER 10000 PK 4
+from STRING 4 NK 8
+to STRING 4 NK 8
+distance INTEGER 5000 NK 4
+departs INTEGER 1439 NK 4
+arrives INTEGER 1439 NK 4
