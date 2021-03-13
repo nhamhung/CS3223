@@ -5,7 +5,6 @@
 import qp.operators.Debug;
 import qp.operators.Operator;
 import qp.optimizer.BufferManager;
-import qp.optimizer.PlanCost;
 import qp.optimizer.RandomOptimizer;
 import qp.parser.Scaner;
 import qp.parser.parser;
