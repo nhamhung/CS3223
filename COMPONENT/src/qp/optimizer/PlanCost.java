@@ -117,6 +117,15 @@ public class PlanCost {
         long leftpages = (long) Math.ceil(((double) lefttuples) / (double) leftcapacity);
         long rightpages = (long) Math.ceil(((double) righttuples) / (double) rightcapacity);
 
+        // Check that page is large enough to perform join between the 2 tables
+        if (tuplesize > Batch.getPageSize()) {
+            System.out.printf(
+                    "\nPage given is too small to perform join.\nNeeded page size: %d\nGiven page size: %d%n",
+                    tuplesize,
+                    Batch.getPageSize());
+            System.exit(1);
+        }
+
         double tuples = (double) lefttuples * righttuples;
         for (Condition con : node.getConditionList()) {
             Attribute leftjoinAttr = con.getLhs();
@@ -140,13 +149,14 @@ public class PlanCost {
         int joinType = node.getJoinType();
         long numbuff = BufferManager.getBuffersPerJoin();
         long joincost;
+        // TODO: Consider swapping left and right tables to decrease join cost
 
         switch (joinType) {
             case JoinType.NESTEDJOIN:
                 joincost = leftpages * rightpages;
                 break;
             case JoinType.BLOCKNESTED:
-                joincost = leftpages / (numbuff - 2) * rightpages;
+                joincost = leftpages + leftpages / (numbuff - 2) * rightpages;
                 break;
             default:
                 System.out.println("join type is not supported");
@@ -265,6 +275,16 @@ public class PlanCost {
         long tuplesize = schema.getTupleSize();
         long pagesize = Math.max(Batch.getPageSize() / tuplesize, 1);
         long numpages = (long) Math.ceil((double) numtuples / (double) pagesize);
+
+        // Check if page is large enough to scan the table
+        if (tuplesize > Batch.getPageSize()) {
+            System.out.printf(
+                    "\nPage given is too read from table %s.\nNeeded page size: %d\nGiven page size: %d\n",
+                    tablename,
+                    tuplesize,
+                    Batch.getPageSize());
+            System.exit(1);
+        }
 
         cost = cost + numpages;
 
