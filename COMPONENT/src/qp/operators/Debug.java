@@ -117,6 +117,11 @@ public class Debug {
 
         } else if (optype == OpType.SCAN) {
             System.out.print(((Scan) node).getTabName());
+
+        } else if (optype == OpType.SORT) {
+            System.out.print("Sort(");
+            PPrint(((Sort) node).getBase());
+            System.out.print(")");
         }
     }
 
