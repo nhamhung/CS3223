@@ -1,3 +1,5 @@
 .DS_Store
+.idea
 COMPONENT/.DS_Store
 out
+COMPONENT/classes

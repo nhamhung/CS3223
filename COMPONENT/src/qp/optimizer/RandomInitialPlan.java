@@ -6,10 +6,12 @@ package qp.optimizer;
 
 import qp.operators.*;
 import qp.utils.*;
+import qp.operators.Sort;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 
@@ -22,6 +24,7 @@ public class RandomInitialPlan {
     ArrayList<Condition> selectionlist;   // List of select conditons
     ArrayList<Condition> joinlist;        // List of join conditions
     ArrayList<Attribute> groupbylist;
+    ArrayList<Attribute> orderByList;
     int numJoin;            // Number of joins in this query
     HashMap<String, Operator> tab_op_hash;  // Table name to the Operator
     Operator root;          // Root of the query plan tree
@@ -33,6 +36,7 @@ public class RandomInitialPlan {
         selectionlist = sqlquery.getSelectionList();
         joinlist = sqlquery.getJoinList();
         groupbylist = sqlquery.getGroupByList();
+        orderByList = sqlquery.getOrderByList();
         numJoin = joinlist.size();
     }
 
@@ -47,19 +51,8 @@ public class RandomInitialPlan {
      * prepare initial plan for the query
      **/
     public Operator prepareInitialPlan() {
-
-        if (sqlquery.isDistinct()) {
-            System.err.println("Distinct is not implemented.");
-            System.exit(1);
-        }
-
         if (sqlquery.getGroupByList().size() > 0) {
             System.err.println("GroupBy is not implemented.");
-            System.exit(1);
-        }
-
-        if (sqlquery.getOrderByList().size() > 0) {
-            System.err.println("Orderby is not implemented.");
             System.exit(1);
         }
 
@@ -69,7 +62,9 @@ public class RandomInitialPlan {
         if (numJoin != 0) {
             createJoinOp();
         }
-        createProjectOp();
+        createOrderbyOp();
+
+        createProjectOp(sqlquery.isDistinct());
 
         return root;
     }
@@ -109,7 +104,7 @@ public class RandomInitialPlan {
         // the scan operator. the projectOp would be put on top of
         // this later in CreateProjectOp
         if (selectionlist.size() == 0) {
-            root = tempop;
+            root = tempop; // root will be scan operator if no selection clause
             return;
         }
 
@@ -137,7 +132,7 @@ public class RandomInitialPlan {
          ** constructed thus far
          **/
         if (selectionlist.size() != 0)
-            root = op1;
+            root = op1; // root will be the last selection
     }
 
     /**
@@ -182,18 +177,34 @@ public class RandomInitialPlan {
             root = jn;
     }
 
-    public void createProjectOp() {
+    public void createProjectOp(boolean isDistinct) {
         Operator base = root;
         if (projectlist == null)
             projectlist = new ArrayList<Attribute>();
         if (!projectlist.isEmpty()) {
-            root = new Project(base, projectlist, OpType.PROJECT);
-            Schema newSchema = base.getSchema().subSchema(projectlist);
-            root.setSchema(newSchema);
+            if (isDistinct) {
+                root = new Project(new Sort(base, projectlist, OpType.SORT), projectlist, OpType.PROJECT, isDistinct);
+                Schema newSchema = base.getSchema().subSchema(projectlist);
+                root.setSchema(newSchema); // reset schema in the case of subschema
+            } else {
+                root = new Project(base, projectlist, OpType.PROJECT, isDistinct);
+                Schema newSchema = base.getSchema().subSchema(projectlist);
+                root.setSchema(newSchema); // reset schema in the case of subschema
+            }
         }
     }
 
-    private void modifyHashtable(Operator old, Operator newop) {
+    public void createOrderbyOp() {
+        Operator base = root;
+        if (orderByList == null)
+            orderByList = new ArrayList<Attribute>();
+        if (!orderByList.isEmpty()) {
+            root = new Sort(base, orderByList, OpType.SORT);
+            root.setSchema(base.getSchema());
+        }
+    }
+
+    private void modifyHashtable(Operator old, Operator newop) { // replace all entries' oldop with newop
         for (HashMap.Entry<String, Operator> entry : tab_op_hash.entrySet()) {
             if (entry.getValue().equals(old)) {
                 entry.setValue(newop);

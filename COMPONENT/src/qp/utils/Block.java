@@ -20,6 +20,16 @@ public class Block implements Serializable {
         tuples = new ArrayList<>(totalCapacity);
     }
 
+    public void orderBy(ArrayList<Integer> attrs) {
+        tuples.sort((t1, t2) -> {
+            for (int i: attrs) {
+                if (t1.dataAt(i).equals(t2.dataAt(i))) continue;
+                return Tuple.compareTuples(t1, t2, attrs, attrs);
+            }
+            return 0;
+        });
+    }
+
     /** Insert the record in page at next free location **/
     public void add(Tuple t) {
         tuples.add(t);
