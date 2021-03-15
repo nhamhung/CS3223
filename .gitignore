@@ -2,4 +2,6 @@
 .idea
 COMPONENT/.DS_Store
 out
-COMPONENT/classes
+./COMPONENT/classes
+
+*.class
