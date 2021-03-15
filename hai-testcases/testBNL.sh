@@ -3,8 +3,9 @@ then
     mkdir testoutput
 fi
 cd tables || { echo "Cannot cd into tables/"; exit 1; }
-#echo "10000\n5\n1\n"| java QueryMain ../queries/testCrossProduct.sql ../testoutput/testCrossProduct.out # generic 115 values
+echo "10000\n5\n1\n"| java QueryMain ../queries/testCrossProduct.sql ../testoutput/testCrossProduct.out # generic 115 values
 echo "10000\n5\n1\n"| java QueryMain ../queries/bnlquery.sql ../testoutput/bnlquery.out # generic 115 values
+echo "10000\n10\n1\n"| java QueryMain ../queries/bnlquery3Tables.sql ../testoutput/bnlquery3Tables.out # generic 115 values
 echo "200\n3\n1\n"| java QueryMain ../queries/query3.sql ../testoutput/out3_3buffer.out # expect this to take a long time
 echo "2000000\n3\n1\n"| java QueryMain ../queries/query3.sql ../testoutput/out3_bigbuffer.out # big batch, few buffers
 echo "200\n50\n1\n"| java QueryMain ../queries/query3.sql ../testoutput/out3_500buffer.out # expect this to have 500 values
