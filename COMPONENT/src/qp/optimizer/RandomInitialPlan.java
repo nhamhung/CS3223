@@ -179,8 +179,25 @@ public class RandomInitialPlan {
 
     public void createProjectOp(boolean isDistinct) {
         Operator base = root;
-        if (projectlist == null)
+
+        if (projectlist == null) {
+            projectlist = new ArrayList<>();
+        }
+
+        /* When `SELECT DISTINCT *`*/
+        if (projectlist.isEmpty() && isDistinct) {
             projectlist = new ArrayList<Attribute>();
+            for (Operator op: tab_op_hash.values()) {
+                Schema schema = op.getSchema();
+                for (Attribute attribute: schema.getAttList()) {
+                    if (!projectlist.contains(attribute)) {
+                        projectlist.add(attribute);
+                    }
+                }
+            }
+        }
+
+        /* When there is projection */
         if (!projectlist.isEmpty()) {
             if (isDistinct) {
                 root = new Project(new Sort(base, projectlist, OpType.SORT), projectlist, OpType.PROJECT, isDistinct);
