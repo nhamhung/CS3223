@@ -139,20 +139,16 @@ public class Sort extends Operator {
     }
 
     private void sortSubFiles() {
-        System.out.println("Sort sub files");
-        System.out.println("num sub files: " + numSubFiles);
         while (numSubFiles != 1) {
             onePassMerge();
         }
     }
 
     private void onePassMerge() {
-        System.out.println("One pass merge");
         int count = 0;
         int numSortPage = numBuffers - 1;
         while (numSubFiles > count * numSortPage) {
             int numFilesBeingRead = Math.min(numSubFiles - count * numSortPage, numSortPage);
-            System.out.println("num files being read: " + numFilesBeingRead);
             TupleReader[] readers = new TupleReader[numFilesBeingRead];
             // Initialise readers
             for (int i = 0;
@@ -165,7 +161,6 @@ public class Sort extends Operator {
             // Create sorted file
             TupleWriter writer = new TupleWriter(String.format("tmp-%d-%d", numRounds + 1, count + 1), batchSize);
             writer.open();
-            System.out.println(isDistinct);
             while (true) {
                 Tuple newTuple = getNextTuple(readers);
                 if (newTuple == null) break;
