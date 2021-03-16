@@ -205,7 +205,6 @@ public class RandomInitialPlan {
         if (!sqlquery.isDistinct()) {
             return;
         }
-
         /* When `SELECT DISTINCT *`*/
         if (projectlist.isEmpty()) {
             projectlist = new ArrayList<Attribute>();
