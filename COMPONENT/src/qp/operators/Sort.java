@@ -8,6 +8,7 @@ import java.util.ArrayList;
 public class Sort extends Operator {
     Operator base;                 // Base table to sort
     ArrayList<Attribute> attrset;  // Set of attributes to compare
+    boolean isDistinct;
     TupleReader currentReader;
     int batchSize;                  // Number of tuples per page
     int numSubFiles;                // Number of sub files
@@ -24,17 +25,20 @@ public class Sort extends Operator {
     Batch inbatch;
     Batch outbatch;
 
+    Tuple prevTuple;
+
     /**
      * index of the attributes in the base operator
      * * that are to be projected
      **/
     ArrayList<Integer> attrIndex;
 
-    public Sort(Operator base, ArrayList<Attribute> as, int type) {
+    public Sort(Operator base, ArrayList<Attribute> as, int type, boolean isDistinct) {
         super(type);
         this.base = base;
         this.attrset = as;
         this.numSubFiles = 0;
+        this.isDistinct = isDistinct;
     }
 
     public Operator getBase() {
@@ -104,10 +108,15 @@ public class Sort extends Operator {
             // Create new sub file represented by block
             while (!newBlock.isFull()) {
                 Batch nextPage = base.next();
+
                 // nextPage is null when we've reached the end of base
                 if (nextPage == null) {
                     endOfBase = true;
                     break;
+                }
+
+                if (isDistinct) {
+                    nextPage = projectTuplesInPage(nextPage);
                 }
 
                 for (int i = 0; i < nextPage.size(); i++) {
@@ -130,16 +139,20 @@ public class Sort extends Operator {
     }
 
     private void sortSubFiles() {
+        System.out.println("Sort sub files");
+        System.out.println("num sub files: " + numSubFiles);
         while (numSubFiles != 1) {
             onePassMerge();
         }
     }
 
     private void onePassMerge() {
+        System.out.println("One pass merge");
         int count = 0;
         int numSortPage = numBuffers - 1;
         while (numSubFiles > count * numSortPage) {
             int numFilesBeingRead = Math.min(numSubFiles - count * numSortPage, numSortPage);
+            System.out.println("num files being read: " + numFilesBeingRead);
             TupleReader[] readers = new TupleReader[numFilesBeingRead];
             // Initialise readers
             for (int i = 0;
@@ -152,11 +165,20 @@ public class Sort extends Operator {
             // Create sorted file
             TupleWriter writer = new TupleWriter(String.format("tmp-%d-%d", numRounds + 1, count + 1), batchSize);
             writer.open();
+            System.out.println(isDistinct);
             while (true) {
                 Tuple newTuple = getNextTuple(readers);
-                // No more values
                 if (newTuple == null) break;
-                writer.next(newTuple);
+                if (isDistinct) {
+                    if (prevTuple == null || Tuple.compareTuples(newTuple, prevTuple, attrIndex, attrIndex) != 0) {
+                        writer.next(newTuple);
+                        prevTuple = newTuple;
+                    }
+                } else {
+                    writer.next(newTuple);
+                }
+
+                // No more values
             }
             writer.close();
             for (TupleReader reader : readers) {
@@ -175,7 +197,7 @@ public class Sort extends Operator {
             Tuple curTuple = readers[i].peek();
             if (curTuple == null) continue;
             if (nextTuple == null
-                || Tuple.compareTuples(curTuple, nextTuple, attrIndex, attrIndex) < 0) {
+                || Tuple.compareTuples(curTuple, nextTuple, attrIndex, attrIndex) < 0) { // curTuple < nextTuple
                 nextTuple = curTuple;
                 fileIndex = i;
             }
@@ -195,9 +217,31 @@ public class Sort extends Operator {
                 endOfSortedFile = true;
                 break;
             }
-            outputPage.add(nextTuple);
+            if (isDistinct && numSubFiles == 1) {
+                if (prevTuple == null || Tuple.compareTuples(nextTuple, prevTuple, attrIndex, attrIndex) != 0) {
+                    outputPage.add(nextTuple);
+                    prevTuple = nextTuple;
+                }
+            } else {
+                outputPage.add(nextTuple);
+            }
         }
         return outputPage;
+    }
+
+    private Batch projectTuplesInPage(Batch page) {
+        Batch projectedPage = new Batch(batchSize);
+        for (int i = 0; i < page.size(); i++) {
+            Tuple basetuple = page.get(i);
+            ArrayList<Object> present = new ArrayList<>();
+            for (int j = 0; j < attrset.size(); j++) {
+                Object data = basetuple.dataAt(attrIndex.get(j));
+                present.add(data);
+            }
+            Tuple outtuple = new Tuple(present);
+            projectedPage.add(outtuple);
+        }
+        return projectedPage;
     }
 
     /**
@@ -228,7 +272,7 @@ public class Sort extends Operator {
         ArrayList<Attribute> newattr = new ArrayList<>();
         for (int i = 0; i < attrset.size(); ++i)
             newattr.add((Attribute) attrset.get(i).clone());
-        Sort newSort = new Sort(newbase, newattr, optype);
+        Sort newSort = new Sort(newbase, newattr, optype, isDistinct);
         newSort.setNumBuff(numBuffers);
         newSort.setSchema(newbase.getSchema());
         return newSort;
