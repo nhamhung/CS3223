@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.skjegstad.utils;
+package bloom;
 
 import java.io.Serializable;
 import java.nio.charset.Charset;

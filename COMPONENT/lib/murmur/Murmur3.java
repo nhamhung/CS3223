@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.hive.common.util;
+package murmur;
 
 
 /**

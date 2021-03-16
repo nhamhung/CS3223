@@ -5,6 +5,7 @@
 import qp.operators.Debug;
 import qp.operators.Operator;
 import qp.optimizer.BufferManager;
+import qp.optimizer.PlanCost;
 import qp.optimizer.RandomOptimizer;
 import qp.parser.Scaner;
 import qp.parser.parser;
@@ -174,6 +175,7 @@ public class QueryMain {
         /** Print each tuple in the result **/
         Batch resultbatch;
         while ((resultbatch = root.next()) != null) {
+            System.out.println("Result batch size is:" + resultbatch.size());
             for (int i = 0; i < resultbatch.size(); ++i) {
                 printTuple(resultbatch.get(i));
             }
