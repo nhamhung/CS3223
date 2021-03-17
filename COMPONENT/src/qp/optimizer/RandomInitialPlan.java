@@ -58,7 +58,8 @@ public class RandomInitialPlan {
         }
         createOrderByOp();
         createGroupByOp();
-        createProjectOp(sqlquery.isDistinct());
+        createProjectOp();
+        createDistinctOp();
 
         return root;
     }
@@ -171,15 +172,41 @@ public class RandomInitialPlan {
             root = jn;
     }
 
-    public void createProjectOp(boolean isDistinct) {
+    public void createProjectOp() {
         Operator base = root;
-
-        if (projectlist == null) {
-            projectlist = new ArrayList<>();
+        if (projectlist == null)
+            projectlist = new ArrayList<Attribute>();
+        if (!projectlist.isEmpty()) {
+            root = new Project(base, projectlist, OpType.PROJECT);
+            Schema newSchema = base.getSchema().subSchema(projectlist);
+            root.setSchema(newSchema);
         }
+    }
 
+    public void createOrderByOp() {
+        Operator base = root;
+        if (orderByList == null)
+            orderByList = new ArrayList<Attribute>();
+        if (!orderByList.isEmpty()) {
+            root = new Sort(base, orderByList, OpType.SORT, sqlquery.isDistinct());
+            root.setSchema(base.getSchema());
+        }
+    }
+
+    private void modifyHashtable(Operator old, Operator newop) { // replace all entries' oldop with newop
+        for (HashMap.Entry<String, Operator> entry : tab_op_hash.entrySet()) {
+            if (entry.getValue().equals(old)) {
+                entry.setValue(newop);
+            }
+        }
+    }
+
+    private void createDistinctOp() {
+        if (!sqlquery.isDistinct()) {
+            return;
+        }
         /* When `SELECT DISTINCT *`*/
-        if (projectlist.isEmpty() && isDistinct) {
+        if (projectlist.isEmpty()) {
             projectlist = new ArrayList<Attribute>();
             for (Operator op: tab_op_hash.values()) {
                 Schema schema = op.getSchema();
@@ -191,36 +218,10 @@ public class RandomInitialPlan {
             }
         }
 
-        /* When there is projection */
-        if (!projectlist.isEmpty()) {
-            if (isDistinct) {
-                root = new Project(new Sort(base, projectlist, OpType.SORT), projectlist, OpType.PROJECT, isDistinct);
-                Schema newSchema = base.getSchema().subSchema(projectlist);
-                root.setSchema(newSchema); // reset schema in the case of subschema
-            } else {
-                root = new Project(base, projectlist, OpType.PROJECT, isDistinct);
-                Schema newSchema = base.getSchema().subSchema(projectlist);
-                root.setSchema(newSchema); // reset schema in the case of subschema
-            }
-        }
-    }
-
-    public void createOrderByOp() {
         Operator base = root;
-        if (orderByList == null)
-            orderByList = new ArrayList<Attribute>();
-        if (!orderByList.isEmpty()) {
-            root = new Sort(base, orderByList, OpType.SORT);
-            root.setSchema(base.getSchema());
-        }
-    }
-
-    private void modifyHashtable(Operator old, Operator newop) { // replace all entries' oldop with newop
-        for (HashMap.Entry<String, Operator> entry : tab_op_hash.entrySet()) {
-            if (entry.getValue().equals(old)) {
-                entry.setValue(newop);
-            }
-        }
+        root = new Sort(base, projectlist, OpType.SORT, sqlquery.isDistinct());
+        Schema newSchema = base.getSchema().subSchema(projectlist);
+        root.setSchema(newSchema);
     }
 
     private void createGroupByOp() {
@@ -241,7 +242,7 @@ public class RandomInitialPlan {
         }
 
         Operator base = root;
-        root = new Project(new Sort(base, groupbylist, OpType.SORT), groupbylist, OpType.PROJECT, true);
+        root = new Project(new Sort(base, groupbylist, OpType.SORT, sqlquery.isDistinct()), groupbylist, OpType.PROJECT);
         Schema newSchema = base.getSchema().subSchema(groupbylist);
         root.setSchema(newSchema); // reset schema in the case of subschema
     }
