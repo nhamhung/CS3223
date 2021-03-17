@@ -11,7 +11,6 @@ import qp.operators.Sort;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 
@@ -51,20 +50,16 @@ public class RandomInitialPlan {
      * prepare initial plan for the query
      **/
     public Operator prepareInitialPlan() {
-        if (sqlquery.getGroupByList().size() > 0) {
-            System.err.println("GroupBy is not implemented.");
-            System.exit(1);
-        }
-
         tab_op_hash = new HashMap<>();
         createScanOp();
         createSelectOp();
         if (numJoin != 0) {
             createJoinOp();
         }
-        createOrderbyOp();
-
-        createProjectOp(sqlquery.isDistinct());
+        createOrderByOp();
+        createGroupByOp();
+        createProjectOp();
+        createDistinctOp();
 
         return root;
     }
@@ -177,29 +172,23 @@ public class RandomInitialPlan {
             root = jn;
     }
 
-    public void createProjectOp(boolean isDistinct) {
+    public void createProjectOp() {
         Operator base = root;
         if (projectlist == null)
             projectlist = new ArrayList<Attribute>();
         if (!projectlist.isEmpty()) {
-            if (isDistinct) {
-                root = new Project(new Sort(base, projectlist, OpType.SORT), projectlist, OpType.PROJECT, isDistinct);
-                Schema newSchema = base.getSchema().subSchema(projectlist);
-                root.setSchema(newSchema); // reset schema in the case of subschema
-            } else {
-                root = new Project(base, projectlist, OpType.PROJECT, isDistinct);
-                Schema newSchema = base.getSchema().subSchema(projectlist);
-                root.setSchema(newSchema); // reset schema in the case of subschema
-            }
+            root = new Project(base, projectlist, OpType.PROJECT);
+            Schema newSchema = base.getSchema().subSchema(projectlist);
+            root.setSchema(newSchema);
         }
     }
 
-    public void createOrderbyOp() {
+    public void createOrderByOp() {
         Operator base = root;
         if (orderByList == null)
             orderByList = new ArrayList<Attribute>();
         if (!orderByList.isEmpty()) {
-            root = new Sort(base, orderByList, OpType.SORT);
+            root = new Sort(base, orderByList, OpType.SORT, sqlquery.isDistinct());
             root.setSchema(base.getSchema());
         }
     }
@@ -211,4 +200,60 @@ public class RandomInitialPlan {
             }
         }
     }
+
+    private void createDistinctOp() {
+        if (!sqlquery.isDistinct()) {
+            return;
+        }
+        /* When `SELECT DISTINCT *`*/
+        if (projectlist.isEmpty()) {
+            projectlist = new ArrayList<Attribute>();
+            for (Operator op: tab_op_hash.values()) {
+                Schema schema = op.getSchema();
+                for (Attribute attribute: schema.getAttList()) {
+                    if (!projectlist.contains(attribute)) {
+                        projectlist.add(attribute);
+                    }
+                }
+            }
+        }
+
+        Operator base = root;
+        root = new Sort(base, projectlist, OpType.SORT, sqlquery.isDistinct());
+        Schema newSchema = base.getSchema().subSchema(projectlist);
+        root.setSchema(newSchema);
+    }
+
+    private void createGroupByOp() {
+        // Guard clause to not create groupby clause if there is no group by command
+        if (groupbylist == null || groupbylist.size() == 0) {
+            return;
+        }
+        if (!isValidGroupByList()) {
+            System.out.println("Attributes selected are not in group by clause");
+            System.exit(1);
+        }
+
+        // Since no aggregate functions and groupby clause is valid. If
+        // query is distinct, this ensures that the value of the groupby
+        // clause is distinct
+        if (sqlquery.isDistinct()) {
+            return;
+        }
+
+        Operator base = root;
+        root = new Project(new Sort(base, groupbylist, OpType.SORT, sqlquery.isDistinct()), groupbylist, OpType.PROJECT);
+        Schema newSchema = base.getSchema().subSchema(groupbylist);
+        root.setSchema(newSchema); // reset schema in the case of subschema
+    }
+
+    private boolean isValidGroupByList() {
+        for (Attribute attr: projectlist) {
+            if (!groupbylist.contains(attr)) return false;
+        }
+        // projectList == null or projectList.size() implies select *
+        // which is not allowed in a group by query
+        return projectlist != null && projectlist.size() != 0;
+    }
+
 }

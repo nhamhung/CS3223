@@ -19,6 +19,7 @@ public class QueryMain {
     static int numAtts;
 
     public static void main(String[] args) {
+        System.out.println("\n======= NEW QUERY =======");
         if (args.length < 2) {
             System.out.println("usage: java QueryMain <queryfilename> <resultfile> <pagesize> <numbuffer>");
             System.exit(1);
@@ -175,6 +176,7 @@ public class QueryMain {
         /** Print each tuple in the result **/
         Batch resultbatch;
         while ((resultbatch = root.next()) != null) {
+            System.out.println("Result batch size is:" + resultbatch.size());
             for (int i = 0; i < resultbatch.size(); ++i) {
                 printTuple(resultbatch.get(i));
             }

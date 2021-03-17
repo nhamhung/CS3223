@@ -46,7 +46,7 @@ public class RandomOptimizer {
         if (node.getOpType() == OpType.JOIN) {
             Operator left = makeExecPlan(((Join) node).getLeft());
             Operator right = makeExecPlan(((Join) node).getRight());
-            int joinType = ((Join) node).getJoinType();
+            int joinType = 3;
             int numbuff = BufferManager.getBuffersPerJoin();
             switch (joinType) {
                 case JoinType.NESTEDJOIN:
@@ -61,6 +61,12 @@ public class RandomOptimizer {
                     bnj.setRight(right);
                     bnj.setNumBuff(numbuff);
                     return bnj;
+                case JoinType.HASHJOIN:
+                    HashJoin hj = new HashJoin((Join) node);
+                    hj.setLeft(left);
+                    hj.setRight(right);
+                    hj.setNumBuff(numbuff);
+                    return hj;
                 default:
                     return node;
             }
@@ -75,6 +81,7 @@ public class RandomOptimizer {
         } else if (node.getOpType() == OpType.SORT) {
             Operator base = makeExecPlan(((Sort) node).getBase());
             ((Sort) node).setBase(base);
+            // TODO: MIGHT BE NUM BUFFER PER JOIN NOT NUM BUFFER
             ((Sort) node).setNumBuff(BufferManager.numBuffer);
             return node;
         } else {
