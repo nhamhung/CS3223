@@ -170,7 +170,6 @@ public class HashJoin extends Join{
                 return false;
             }
         }
-        System.out.println("Partitioning completes");
         return right.close() && left.close();
 
     }
@@ -185,7 +184,6 @@ public class HashJoin extends Join{
             partitionCounter++;
             leftInputStreamName = "L" + partitionCounter;
             rightInputStreamName = "R" + partitionCounter;
-            System.out.println("Part counter = " + partitionCounter);
         }
 
         /*
