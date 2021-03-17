@@ -19,6 +19,7 @@ public class QueryMain {
     static int numAtts;
 
     public static void main(String[] args) {
+        System.out.println("\n======= NEW QUERY =======");
         if (args.length < 2) {
             System.out.println("usage: java QueryMain <queryfilename> <resultfile> <pagesize> <numbuffer>");
             System.exit(1);

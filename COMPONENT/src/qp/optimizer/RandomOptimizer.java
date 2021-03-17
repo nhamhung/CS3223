@@ -81,6 +81,7 @@ public class RandomOptimizer {
         } else if (node.getOpType() == OpType.SORT) {
             Operator base = makeExecPlan(((Sort) node).getBase());
             ((Sort) node).setBase(base);
+            // TODO: MIGHT BE NUM BUFFER PER JOIN NOT NUM BUFFER
             ((Sort) node).setNumBuff(BufferManager.numBuffer);
             return node;
         } else {
