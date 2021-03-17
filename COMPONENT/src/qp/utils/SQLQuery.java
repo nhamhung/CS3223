@@ -6,7 +6,7 @@ package qp.utils;
 
 import java.util.ArrayList;
 
-public class SQLQuery {
+public class  SQLQuery {
 
     ArrayList<Attribute> projectList;    // List of project attributes from select clause
     ArrayList<String> fromList;          // List of tables in from clause
