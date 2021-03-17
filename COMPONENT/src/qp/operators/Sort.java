@@ -17,6 +17,7 @@ public class Sort extends Operator {
     boolean endOfBase = false;      // Whether we've reached the end of the base operator
     boolean endOfSortedFile = false;     // Whether we've reached the end of the sorted file
     boolean sorted = false;         // Whether sorting have taken place, we only sort once
+    boolean isDuplicatesRemoved = false;
 
     /**
      * The following fields are requied during execution
@@ -90,7 +91,10 @@ public class Sort extends Operator {
     public Batch next() {
         if (!sorted) {
             createSubFiles();
-            sortSubFiles();
+            if (numSubFiles != 1) {
+                sortSubFiles();
+                isDuplicatesRemoved = true;
+            }
             sorted = true;
         }
         if (currentReader == null) {
@@ -212,7 +216,7 @@ public class Sort extends Operator {
                 endOfSortedFile = true;
                 break;
             }
-            if (isDistinct && numSubFiles == 1) {
+            if (isDistinct && !isDuplicatesRemoved) { // duplicates not yet removed from merging if onePassMerge() is not run
                 if (prevTuple == null || Tuple.compareTuples(nextTuple, prevTuple, attrIndex, attrIndex) != 0) {
                     outputPage.add(nextTuple);
                     prevTuple = nextTuple;
