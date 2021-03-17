@@ -222,10 +222,9 @@ public class PlanCost {
     protected long getStatistics(Sort node) {
         long numTuples = calculateCost(node.getBase());
         long tupleSize = node.getSchema().getTupleSize();
-        long numPages = numTuples / tupleSize;
-        // TODO: MIGHT BE NUM BUFFER PER JOIN NOT NUM BUFFER
+        long numPages = Math.round(Math.ceil((double )numTuples / (double)tupleSize));
         long numBuffers = BufferManager.numBuffer;
-        long numSubFiles = numPages / numBuffers;
+        long numSubFiles = Math.round(Math.ceil((double) numPages / (double) numBuffers));
         long numPasses = 1 + Math.round(Math.ceil(Math.log(numSubFiles) / Math.log(numBuffers - 1)));
         cost += numPages * numPasses;
         return numTuples;

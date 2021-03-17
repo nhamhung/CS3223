@@ -119,10 +119,6 @@ public class Sort extends Operator {
                     break;
                 }
 
-                if (isDistinct) {
-                    nextPage = projectTuplesInPage(nextPage);
-                }
-
                 for (int i = 0; i < nextPage.size(); i++) {
                     newBlock.add(nextPage.get(i));
                 }
@@ -226,21 +222,6 @@ public class Sort extends Operator {
             }
         }
         return outputPage;
-    }
-
-    private Batch projectTuplesInPage(Batch page) {
-        Batch projectedPage = new Batch(batchSize);
-        for (int i = 0; i < page.size(); i++) {
-            Tuple basetuple = page.get(i);
-            ArrayList<Object> present = new ArrayList<>();
-            for (int j = 0; j < attrset.size(); j++) {
-                Object data = basetuple.dataAt(attrIndex.get(j));
-                present.add(data);
-            }
-            Tuple outtuple = new Tuple(present);
-            projectedPage.add(outtuple);
-        }
-        return projectedPage;
     }
 
     /**
