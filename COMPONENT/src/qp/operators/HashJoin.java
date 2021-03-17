@@ -165,6 +165,13 @@ public class HashJoin extends Join{
                     rightOutputStreams[i].close();
                 }
                 rightCursor = 0;
+
+                /*
+                    Reinitialize the bloom filter.
+                    This time with more hash functions.
+                    This filter is used for the next() operations.
+                 */
+                bloomFilter = new BloomFilter<Integer>(32, N, 6);
             } catch (IOException e) {
                 System.out.println("[Partition] Error while partitioning left table.");
                 return false;
@@ -311,11 +318,6 @@ public class HashJoin extends Join{
                 and one is for the probing partition
          */
         N = numBuff - 2;
-        /*
-            Reinitialize the bloom filter.
-            This time with more hash functions.
-         */
-        bloomFilter = new BloomFilter<Integer>(32, N, 6);
         outputPage = new Batch(batchSize);
         while (!outputPage.isFull()) {
             /*
