@@ -160,7 +160,7 @@ public class PlanCost {
                 break;
             case JoinType.HASHJOIN:
                 // TODO: FIX HASHJOIN COST
-                joincost = leftpages + leftpages / (numbuff - 2) * rightpages + 1;
+                joincost = 0;
                 break;
             default:
                 System.out.println("join type is not supported");
