@@ -1,3 +1,3 @@
 SELECT *
-FROM Flights,Schedule
-WHERE Flights.flno=Schedule.flno
+FROM Schedule,Aircrafts
+WHERE Schedule.aid=Aircrafts.aid
