@@ -1,4 +1,4 @@
-SELECT Customer.cid, Customer.firstname, Customer.gender, Cart.cartid, Cart.status, Cart.cid
+SELECT DISTINCT Customer.cid
 FROM Customer,Cart
-WHERE Customer.cid=Cart.cid, Customer.cid=Cart.cartid
-ORDERBY Cart.cartid
+WHERE Customer.cid = Cart.cartid, Customer.cid <= Cart.cid, Customer.cid < Cart.cid, Cart.cid >= Customer.cid
+
