@@ -44,6 +44,7 @@ public class HashJoin extends Join{
     Batch rightBatch;
     int partitionCounter = -1;
     int N;
+    int joinid;
 
     BloomFilter<Integer> bloomFilter;
 
@@ -52,6 +53,13 @@ public class HashJoin extends Join{
         schema = jn.getSchema();
         jointype = jn.getJoinType();
         numBuff = jn.getNumBuff();
+        System.out.println(leftIndex);
+        /*
+            This join makes use of temporary output files.
+            When multiple hash joins happen concurrently we need an identifier to differentiate files that are
+            spawned by different joins.
+         */
+        joinid = this.hashCode();
     }
 
     /*
@@ -109,7 +117,7 @@ public class HashJoin extends Join{
                 ObjectOutputStream[] leftOutputStreams = new ObjectOutputStream[N];
                 for (int i = 0; i < N; i++) {
                     buckets[i] = new Batch(leftBatchMaxSize);
-                    leftOutputStreams[i] = new ObjectOutputStream(new FileOutputStream("L" + i));
+                    leftOutputStreams[i] = new ObjectOutputStream(new FileOutputStream("L" + i + joinid));
                 }
                 while ((leftPage = left.next()) != null) {
                     while (leftCursor < leftPage.size()) {
@@ -142,7 +150,7 @@ public class HashJoin extends Join{
                 ObjectOutputStream[] rightOutputStreams = new ObjectOutputStream[N];
                 for (int i = 0; i < N; i++) {
                     buckets[i] = new Batch(rightBatchMaxSize);
-                    rightOutputStreams[i] = new ObjectOutputStream(new FileOutputStream("R" + i));
+                    rightOutputStreams[i] = new ObjectOutputStream(new FileOutputStream("R" + i + joinid));
                 }
                 while ((rightPage = right.next()) != null) {
                     while (rightCursor < rightPage.size()) {
@@ -189,8 +197,8 @@ public class HashJoin extends Join{
          */
         if (endOfLeftTable) {
             partitionCounter++;
-            leftInputStreamName = "L" + partitionCounter;
-            rightInputStreamName = "R" + partitionCounter;
+            leftInputStreamName = "L" + partitionCounter + joinid;
+            rightInputStreamName = "R" + partitionCounter + joinid;
         }
 
         /*
@@ -243,7 +251,7 @@ public class HashJoin extends Join{
                 if (inMemoryBuckets[k].size() >= leftBatchMaxSize) {
                     hasBucketOverflow = true;
                     endOfLeftTable = false;
-                    String temp = "temp";
+                    String temp = "temp" + joinid;
                     try {
                         ObjectOutputStream tempOutputStream = new ObjectOutputStream(new FileOutputStream(temp));
                         /*
@@ -312,7 +320,7 @@ public class HashJoin extends Join{
      Phase 2: for each partition number, check records from the left and right table.
      */
     public Batch next() {
-
+        System.out.println("Doing " + joinid);
         /* Number of pages available 
             = numBuffs - 2 because one is for output buffer
                 and one is for the probing partition
@@ -430,8 +438,8 @@ public class HashJoin extends Join{
      */
     public boolean close() {
        for (int i = 0; i < numBuff - 1; i++) {
-            (new File("L"+ i)).delete();
-            (new File("R"+ i)).delete();
+            (new File("L"+ i+ joinid)).delete();
+            (new File("R"+ i+ joinid)).delete();
        }
        return true;
     }
