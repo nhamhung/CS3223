@@ -159,8 +159,13 @@ public class PlanCost {
                 joincost = leftpages + leftpages / (numbuff - 2) * rightpages;
                 break;
             case JoinType.HASHJOIN:
-                // TODO: FIX HASHJOIN COST
-                joincost = 0;
+                // Checking if can partition in one pass
+                boolean isOnePass = numbuff > Math.sqrt(Math.min(leftpages, rightpages));
+                if (isOnePass) {
+                    joincost = 3 * (leftpages + rightpages);
+                } else {
+                    joincost = 2 * (leftpages + rightpages) + leftpages + leftpages / (numbuff - 2) * rightpages;
+                }
                 break;
             default:
                 System.out.println("join type is not supported");
