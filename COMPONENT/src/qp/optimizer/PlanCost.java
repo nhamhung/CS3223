@@ -153,14 +153,19 @@ public class PlanCost {
 
         switch (joinType) {
             case JoinType.NESTEDJOIN:
-                joincost = leftpages * rightpages;
+                joincost = leftpages * rightpages * 4;
                 break;
             case JoinType.BLOCKNESTED:
-                joincost = 1;//leftpages + leftpages / (numbuff - 2) * rightpages;
+                joincost = leftpages + leftpages / (numbuff - 2) * rightpages * 2;
                 break;
             case JoinType.HASHJOIN:
-                // TODO: FIX HASHJOIN COST
-                joincost = 1000;
+                // Checking if can partition in one pass
+                boolean isOnePass = numbuff > Math.sqrt(Math.min(leftpages, rightpages));
+                if (isOnePass) {
+                    joincost = 3 * (leftpages + rightpages);
+                } else {
+                    joincost = 2 * (leftpages + rightpages) + leftpages + leftpages / (numbuff - 2) * rightpages;
+                }
                 break;
             default:
                 System.out.println("join type is not supported");

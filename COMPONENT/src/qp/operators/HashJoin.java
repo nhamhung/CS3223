@@ -320,8 +320,7 @@ public class HashJoin extends Join{
      Phase 2: for each partition number, check records from the left and right table.
      */
     public Batch next() {
-        System.out.println("Doing " + joinid);
-        /* Number of pages available 
+        /* Number of pages available
             = numBuffs - 2 because one is for output buffer
                 and one is for the probing partition
          */
