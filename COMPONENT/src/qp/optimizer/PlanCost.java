@@ -156,11 +156,11 @@ public class PlanCost {
                 joincost = leftpages * rightpages;
                 break;
             case JoinType.BLOCKNESTED:
-                joincost = leftpages + leftpages / (numbuff - 2) * rightpages;
+                joincost = 1;//leftpages + leftpages / (numbuff - 2) * rightpages;
                 break;
             case JoinType.HASHJOIN:
                 // TODO: FIX HASHJOIN COST
-                joincost = 0;
+                joincost = 1000;
                 break;
             default:
                 System.out.println("join type is not supported");
