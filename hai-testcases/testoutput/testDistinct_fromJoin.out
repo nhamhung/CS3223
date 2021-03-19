@@ -41,7 +41,6 @@ Customer.gender  Cart.cartid
 0	87	
 0	89	
 0	90	
-0	95	
 0	101	
 0	103	
 0	105	
@@ -66,7 +65,6 @@ Customer.gender  Cart.cartid
 0	152	
 0	156	
 0	158	
-0	160	
 0	161	
 0	163	
 0	167	
@@ -130,7 +128,6 @@ Customer.gender  Cart.cartid
 0	301	
 0	303	
 0	304	
-0	306	
 0	309	
 0	311	
 0	312	
@@ -167,7 +164,6 @@ Customer.gender  Cart.cartid
 0	388	
 0	389	
 0	392	
-0	394	
 0	397	
 0	398	
 0	399	
@@ -273,6 +269,7 @@ Customer.gender  Cart.cartid
 1	92	
 1	93	
 1	94	
+1	95	
 1	96	
 1	97	
 1	98	
@@ -313,6 +310,7 @@ Customer.gender  Cart.cartid
 1	155	
 1	157	
 1	159	
+1	160	
 1	162	
 1	164	
 1	165	
@@ -395,6 +393,7 @@ Customer.gender  Cart.cartid
 1	300	
 1	302	
 1	305	
+1	306	
 1	307	
 1	308	
 1	310	
@@ -446,6 +445,7 @@ Customer.gender  Cart.cartid
 1	390	
 1	391	
 1	393	
+1	394	
 1	395	
 1	396	
 1	402	
