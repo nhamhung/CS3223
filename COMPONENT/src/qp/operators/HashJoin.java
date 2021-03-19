@@ -22,14 +22,7 @@ public class HashJoin extends Join{
 
     ArrayList<Integer> leftIndex;   // Indices of the join attributes in left table
     ArrayList<Integer> rightIndex;  // Indices of the join attributes in right table
-    String rfname;                  // The file name where the right table is materialized
     Batch outputPage;                 // Buffer page for output
-    Block leftBlock;                // Buffer block for left input stream
-    Batch rightPage;               // Buffer page for right input stream
-    ObjectInputStream in;           // File pointer to the right hand materialized file
-
-    int count = 0;
-
     int leftCursor;                       // Cursor for left side buffer
     int rightCursor;                      // Cursor for right side buffer
     boolean endOfLeftTable = true;                    // Whether end of stream (left table) is reached
@@ -108,7 +101,14 @@ public class HashJoin extends Join{
         buckets = new Batch[N];
         bloomFilter = new BloomFilter<Integer>(32, N, 4);
 
-        /* Partitioning left then right table. Using bloom filter to eliminate guaranteed mismatch. */
+        /* Partitioning left then right table. Using bloom filter to eliminate guaranteed mismatch.
+         *
+         *  When a partition exceeds the maximum batch size, it is spilled to storage. Records from the same partitions
+         * are stored under files whose name depends on:
+         *       - Whether the table is left or right
+         *       - The partition number
+         *       - The hashcode() (joinid) of this Join method
+         * */
 
         if (!left.open()) {
             return false;
@@ -178,6 +178,7 @@ public class HashJoin extends Join{
                     Reinitialize the bloom filter.
                     This time with more hash functions.
                     This filter is used for the next() operations.
+
                  */
                 bloomFilter = new BloomFilter<Integer>(32, N, 6);
             } catch (IOException e) {
@@ -209,6 +210,14 @@ public class HashJoin extends Join{
 
     }
 
+    /*
+        Read in the left table partition and build a hash code in memory.
+        We need to reserve two buffers: one for the right table during probe phase, and one for output buffer.
+        A different hash function is used to divide the records into buckets. If the buckets overflow then probing is
+        done on what we have hitherto, before the other records in the partition is loaded in.
+
+
+    */
     private void readLeftTablePartition() {
 
         boolean hasBucketOverflow = false;
@@ -235,9 +244,9 @@ public class HashJoin extends Join{
              * Read from the left partition
              */
             for (int i = 0; i < leftBatch.size(); i++) {
-                            /*
-                                Here, changing the separator allows us to generate a different hash function
-                             */
+                /*
+                    Here, changing the separator allows us to generate a different hash function
+                 */
                 Tuple record = leftBatch.get(i);
                 int k = hash(record, N, leftIndex, "?");
                 bloomFilter.add(k);
@@ -318,6 +327,9 @@ public class HashJoin extends Join{
 
     /*
      Phase 2: for each partition number, check records from the left and right table.
+     We build a second hashtable to further trim down the actual matching. A different hash function is used to
+     avoid cluttering everything into one bucket. This is achieved by modifying the separator.
+
      */
     public Batch next() {
         /* Number of pages available
@@ -353,6 +365,10 @@ public class HashJoin extends Join{
                     endOfLeftTable = false;
                     endOfRightTable = false;
                     rightBatch = null;
+                    /*
+                        Read in the left table partition.
+                     */
+
                     readLeftTablePartition();
                     /*
                         Read in one batch from the right table.
@@ -376,6 +392,13 @@ public class HashJoin extends Join{
                 }
             }
             while (!endOfRightTable) {
+                /*
+                    Traversing through the buffer containing a batch from the right table.
+                    Probing the hashtable.
+                    If the probe hits a bucket number, then we will check against the left table records stored in that
+                    bucket.
+                    A bloom filter is also used here.
+                 */
 
                 for (int i = rightCursor; i < rightBatch.size(); i++) {
                     Tuple rightRecord = rightBatch.get(i);
@@ -407,9 +430,14 @@ public class HashJoin extends Join{
                             }
                         }
                     }
+                    // reset left cursor
                     leftCursor = 0;
                 }
+                // reset right cursor
                 rightCursor = 0;
+                /*
+                    Load more pages from this partition, right table.
+                 */
                 try {
                     rightBatch = (Batch) rightInputStream.readObject();
                     while (rightBatch == null || rightBatch.isEmpty())
@@ -434,13 +462,14 @@ public class HashJoin extends Join{
     }
     /*
      * Close the operator
+     * Making sure to clean up the floating partitions.
      */
     public boolean close() {
-       for (int i = 0; i < numBuff - 1; i++) {
+        for (int i = 0; i < numBuff - 1; i++) {
             (new File("L"+ i+ joinid)).delete();
             (new File("R"+ i+ joinid)).delete();
-       }
-       return true;
+        }
+        return true;
     }
 
 }
