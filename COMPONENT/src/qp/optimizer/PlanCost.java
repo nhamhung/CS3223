@@ -156,7 +156,7 @@ public class PlanCost {
                 joincost = leftpages * rightpages;
                 break;
             case JoinType.BLOCKNESTED:
-                joincost = leftpages + leftpages / (numbuff - 2) * rightpages;
+                joincost = leftpages + Math.round(Math.ceil((double) leftpages / ((double) numbuff - 2))) * rightpages;
                 break;
             case JoinType.HASHJOIN:
                 // Checking if can partition in one pass

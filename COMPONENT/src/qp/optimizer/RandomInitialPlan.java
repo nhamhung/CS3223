@@ -188,7 +188,7 @@ public class RandomInitialPlan {
         if (orderByList == null)
             orderByList = new ArrayList<Attribute>();
         if (!orderByList.isEmpty()) {
-            root = new Sort(base, orderByList, OpType.SORT, sqlquery.isDistinct());
+            root = new Sort(base, orderByList, OpType.SORT, false);
             root.setSchema(base.getSchema());
         }
     }
@@ -219,7 +219,7 @@ public class RandomInitialPlan {
         }
 
         Operator base = root;
-        root = new Sort(base, projectlist, OpType.SORT, sqlquery.isDistinct());
+        root = new Sort(base, projectlist, OpType.SORT, true);
         Schema newSchema = base.getSchema();
         root.setSchema(newSchema);
     }

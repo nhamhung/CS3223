@@ -46,7 +46,15 @@ public class RandomOptimizer {
         if (node.getOpType() == OpType.JOIN) {
             Operator left = makeExecPlan(((Join) node).getLeft());
             Operator right = makeExecPlan(((Join) node).getRight());
-            int joinType = ((Join) node).getJoinType();
+            int joinType;
+            /*
+                If the join is not equijoin then we need to force the joinType to be BLOCKNESTED
+             */
+            if (!((Join) node).isEquijoin()) {
+                joinType = JoinType.BLOCKNESTED;
+            } else {
+                joinType = ((Join) node).getJoinType();
+            }
             int numbuff = BufferManager.getBuffersPerJoin();
             switch (joinType) {
                 case JoinType.NESTEDJOIN:
@@ -242,7 +250,7 @@ public class RandomOptimizer {
         Operator right = node.getRight();
         node.setLeft(right);
         node.setRight(left);
-        node.getCondition().flip();
+        node.flipConditions();
         modifySchema(root);
         return root;
     }

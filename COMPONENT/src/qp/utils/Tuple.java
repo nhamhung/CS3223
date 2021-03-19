@@ -59,6 +59,51 @@ public class Tuple implements Serializable {
         return true;
     }
 
+    /*
+        Overloaded methods to serve both nonequi join and equijoin.
+        Do note that this should not be used by HashJoin, since the join does not work with non "=" conditions.
+     */
+
+    public boolean checkJoin(Tuple right, ArrayList<Integer> leftindex, ArrayList<Integer> rightindex, ArrayList<Integer> condOps) {
+
+        if (leftindex.size() != rightindex.size()) return false;
+        if (leftindex.size() != condOps.size()) return false;
+        for (int i = 0; i < leftindex.size(); ++i) {
+            // It's ugly :(
+            Comparable leftData = (Comparable) dataAt(leftindex.get(i));
+            Comparable rightData = (Comparable) right.dataAt(rightindex.get(i));
+
+            if (!leftData.getClass().equals(rightData.getClass())) {
+                System.out.println("[Tuple checking] Unmatched data type.");
+                return false;
+            }
+            switch (condOps.get(i)) {
+                case Condition.LESSTHAN:
+                    if (leftData.compareTo(rightData) >= 0) return false;
+                    else break;
+                case Condition.GREATERTHAN:
+                    if (leftData.compareTo(rightData) <= 0) return false;
+                    else break;
+                case Condition.LTOE:
+                    if (leftData.compareTo(rightData) > 0) return false;
+                    else break;
+                case Condition.GTOE:
+                    if (leftData.compareTo(rightData) < 0) return false;
+                    else break;
+                case Condition.EQUAL:
+                    if (leftData.compareTo(rightData) != 0) return false;
+                    else break;
+                case Condition.NOTEQUAL:
+                    if (leftData.compareTo(rightData) == 0) return false;
+                    else break;
+                default:
+                    System.out.println("[Tuple checking] The comparison operator is not recognized.");
+                    return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Joining two tuples without duplicate column elimination
      **/

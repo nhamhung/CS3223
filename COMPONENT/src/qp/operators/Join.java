@@ -102,6 +102,19 @@ public class Join extends Operator {
         conditionList.add(condition);
     }
 
+    /*
+        Check if this join is equijoin.
+     */
+    public boolean isEquijoin() {
+        for (Condition cond : conditionList) if (cond.getExprType() != Condition.EQUAL) return false;
+        return true;
+    }
+
+    public void flipConditions() {
+        for (Condition con : conditionList) con.flip();
+    }
+
+
     public Object clone() {
         Operator newleft = (Operator) left.clone();
         Operator newright = (Operator) right.clone();
