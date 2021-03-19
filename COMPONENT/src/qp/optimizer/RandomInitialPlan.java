@@ -37,6 +37,13 @@ public class RandomInitialPlan {
         groupbylist = sqlquery.getGroupByList();
         orderByList = sqlquery.getOrderByList();
         numJoin = joinlist.size();
+        /*
+            The next line is a quick way to force numJoin to reset to the correct number of joins we want
+            i.e. no. of unique pairs of tables.
+            Refer to createJoinOp() for more details.
+
+         */
+        prepareInitialPlan();
     }
 
     /**
@@ -130,28 +137,73 @@ public class RandomInitialPlan {
             root = op1; // root will be the last selection
     }
 
+
+
+
+
+
+    /*
+        Name generator for a pair of attributes in a join clause.
+        Force the left part to be lexicographically larger.
+     */
+    private String generateJoinName(String left, String right) {
+        return left + right;
+    }
+
+
     /**
      * create join operators
      **/
     public void createJoinOp() {
+        HashMap<String, Join> joinMap = new HashMap<>();
+        /*
+            Collapse the join conditions such that for each unique pair of tables we only issue one join query.
+         */
+        for (Condition cn : joinlist) {
+            String lefttab = cn.getLhs().getTabName();
+            String righttab = ((Attribute) cn.getRhs()).getTabName();
+            String key = generateJoinName(lefttab, righttab);
+            String flippedKey = generateJoinName(righttab, lefttab);
+
+            /*
+                Key is generate by name concatenation.
+                We also take care of the case wherein the names are flipped.
+             */
+            if (joinMap.containsKey(key)) {
+                joinMap.get(key).addCondition(cn);
+            } else if (joinMap.containsKey(flippedKey)) {
+                joinMap.get(flippedKey).addCondition(cn.getFlippedCondition());
+            } else {
+                Operator left = (Operator) tab_op_hash.get(lefttab);
+                Operator right = (Operator) tab_op_hash.get(righttab);
+                joinMap.put(key, new Join(left, right, cn, OpType.JOIN));
+            }
+
+        }
+        /*
+            Set the numJoin of this plan, as well as total number of joins of this query to be the number that we
+            want.
+            Here that number is the number of unique pairs of tables. Do note that A, B and B, A refer to one pair only.
+         */
+        ArrayList<Join> jl = new ArrayList<>(joinMap.values());
+        numJoin = jl.size();
+        sqlquery.setNj(numJoin);
+
         BitSet bitCList = new BitSet(numJoin);
         int jnnum = RandNumb.randInt(0, numJoin - 1);
         Join jn = null;
-
         /** Repeat until all the join conditions are considered **/
         while (bitCList.cardinality() != numJoin) {
-            /** If this condition is already consider chose
+            /** If this condition is already consider choose
              ** another join condition
              **/
             while (bitCList.get(jnnum)) {
                 jnnum = RandNumb.randInt(0, numJoin - 1);
             }
-            Condition cn = (Condition) joinlist.get(jnnum);
-            String lefttab = cn.getLhs().getTabName();
-            String righttab = ((Attribute) cn.getRhs()).getTabName();
-            Operator left = (Operator) tab_op_hash.get(lefttab);
-            Operator right = (Operator) tab_op_hash.get(righttab);
-            jn = new Join(left, right, cn, OpType.JOIN);
+            jn = jl.get(jnnum);
+            Operator left = jn.getLeft();
+            Operator right = jn.getRight();
+
             jn.setNodeIndex(jnnum);
             Schema newsche = left.getSchema().joinWith(right.getSchema());
             jn.setSchema(newsche);
@@ -162,14 +214,15 @@ public class RandomInitialPlan {
             jn.setJoinType(joinMeth);
             modifyHashtable(left, jn);
             modifyHashtable(right, jn);
+
             bitCList.set(jnnum);
         }
-
         /** The last join operation is the root for the
          ** constructed till now
          **/
         if (numJoin != 0)
             root = jn;
+
     }
 
     public void createProjectOp() {

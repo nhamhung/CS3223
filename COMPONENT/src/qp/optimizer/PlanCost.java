@@ -130,6 +130,7 @@ public class PlanCost {
         for (Condition con : node.getConditionList()) {
             Attribute leftjoinAttr = con.getLhs();
             Attribute rightjoinAttr = (Attribute) con.getRhs();
+
             int leftattrind = leftschema.indexOf(leftjoinAttr);
             int rightattrind = rightschema.indexOf(rightjoinAttr);
             leftjoinAttr = leftschema.getAttribute(leftattrind);

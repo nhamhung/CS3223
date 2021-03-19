@@ -11,6 +11,7 @@ public class BlockNestedJoin extends Join {
     int batchSize;                  // Number of tuples per out batch
     ArrayList<Integer> leftIndex;   // Indices of the join attributes in left table
     ArrayList<Integer> rightIndex;  // Indices of the join attributes in right table
+    ArrayList<Integer> condOps;     // Indicates the type of comparison for join
     String rfname;                  // The file name where the right table is materialized
     Batch outputPage;                 // Buffer page for output
     Block leftBlock;                // Buffer block for left input stream
@@ -43,11 +44,13 @@ public class BlockNestedJoin extends Join {
         /** find indices attributes of join conditions **/
         leftIndex = new ArrayList<>();
         rightIndex = new ArrayList<>();
+        condOps = new ArrayList<>();
         for (Condition con : conditionList) {
             Attribute leftAttr = con.getLhs();
             Attribute rightAttr = (Attribute) con.getRhs();
             leftIndex.add(left.getSchema().indexOf(leftAttr));
             rightIndex.add(right.getSchema().indexOf(rightAttr));
+            condOps.add(con.getExprType());
         }
         Batch rightPage;
 
@@ -120,7 +123,7 @@ public class BlockNestedJoin extends Join {
                     while (rightCursor < rightPage.size()) {
                         Tuple leftTuple = leftBlock.get(leftCursor);
                         Tuple rightTuple = rightPage.get(rightCursor);
-                        if (leftTuple.checkJoin(rightTuple, leftIndex, rightIndex)) {
+                        if (leftTuple.checkJoin(rightTuple, leftIndex, rightIndex, condOps)) {
                             Tuple outTuple = leftTuple.joinWith(rightTuple);
                             outputPage.add(outTuple);
                             if (outputPage.isFull()) {

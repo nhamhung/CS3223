@@ -21,6 +21,7 @@ public class  SQLQuery {
     ArrayList<Attribute> groupbyList;    // List of attibutes in groupby clause
     ArrayList<Attribute> orderbyList;    // List of attibutes in orderby clause
 
+    private int nj = -1;
     boolean isDistinct = false;          // Whether distinct key word appeared in select clause
 
     public SQLQuery(ArrayList<Attribute> list1, ArrayList<String> list2, ArrayList<Condition> list3) {
@@ -108,7 +109,16 @@ public class  SQLQuery {
 
     public ArrayList<Attribute> getOrderByList() { return orderbyList; }
 
+    public void setNj(int i) {
+        nj = i;
+    }
+
+    /*
+        nj is the correct number of joins that we want
+        This is set by the method createJoinOp in RandomInitialPlan.java
+     */
     public int getNumJoin() {
+        if (nj > -1) return nj;
         if (joinList == null)
             return 0;
         return joinList.size();
