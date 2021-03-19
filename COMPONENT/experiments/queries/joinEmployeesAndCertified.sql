@@ -1,4 +1,3 @@
-SELECT Employees.eid,Certified.aid,Employees.ename,Employees.salary
+SELECT *
 FROM Certified,Employees
 WHERE Employees.eid=Certified.eid
-ORDERBY Employees.eid,Certified.aid

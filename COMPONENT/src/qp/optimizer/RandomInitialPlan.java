@@ -273,7 +273,7 @@ public class RandomInitialPlan {
 
         Operator base = root;
         root = new Sort(base, projectlist, OpType.SORT, sqlquery.isDistinct());
-        Schema newSchema = base.getSchema().subSchema(projectlist);
+        Schema newSchema = base.getSchema();
         root.setSchema(newSchema);
     }
 
@@ -296,8 +296,8 @@ public class RandomInitialPlan {
 
         Operator base = root;
         root = new Sort(base, groupbylist, OpType.SORT, true);
-        Schema newSchema = base.getSchema().subSchema(groupbylist);
-        root.setSchema(newSchema); // reset schema in the case of subschema
+        Schema newSchema = base.getSchema();
+        root.setSchema(newSchema);
     }
 
     private boolean isValidGroupByList() {
